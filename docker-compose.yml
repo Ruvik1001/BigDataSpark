@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: bdspark-postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ./sql/init:/docker-entrypoint-initdb.d:ro
+      - "./исходные данные:/data:ro"
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: bdspark-clickhouse
+    env_file:
+      - .env
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+    ports:
+      - "${CLICKHOUSE_HTTP_PORT}:8123"
+      - "${CLICKHOUSE_NATIVE_PORT}:9000"
+    volumes:
+      - chdata:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --user $$CLICKHOUSE_USER --password $$CLICKHOUSE_PASSWORD --query 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  spark:
+    build: .
+    image: bdspark-spark:lab2
+    container_name: bdspark-spark
+    env_file:
+      - .env
+    ports:
+      - "${SPARK_UI_PORT}:4040"
+    volumes:
+      - ./jobs:/opt/jobs:ro
+      - ./sql:/opt/sql:ro
+    entrypoint: ["sleep", "infinity"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  chdata:

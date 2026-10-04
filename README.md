@@ -1,3 +1,5 @@
+Работа выполнена студентом МАИ группы М8О-205СВ-25 Рудневым Виктором Владимировичем.
+
 # BigDataSpark
 
 Анализ больших данных - лабораторная работа №2 - ETL реализованный с помощью Spark
@@ -85,3 +87,17 @@
 7. Код Apache Spark трансформации данных из снежинки/звезды в отчеты в Neo4j.
 8. Код Apache Spark трансформации данных из снежинки/звезды в отчеты в MongoDB.
 9. Код Apache Spark трансформации данных из снежинки/звезды в отчеты в Valkey.
+
+## Запуск
+
+Скопировать `.env_example` в `.env` (что куда писать — в `REPORT.md`), затем из каталога `BigDataSpark`:
+
+```bash
+docker compose up -d --build
+docker exec bdspark-spark /opt/spark/bin/spark-submit /opt/jobs/etl_star.py
+docker exec bdspark-spark /opt/spark/bin/spark-submit /opt/jobs/etl_reports.py
+```
+
+Первая джоба собирает схему `star` в PostgreSQL из `mock_data`. Вторая пишет 6 витрин в ClickHouse, база `reports`.
+
+Обязательная часть задания: PostgreSQL, Spark, ClickHouse. Cassandra, Neo4j, MongoDB и Valkey в этой работе не делались.
